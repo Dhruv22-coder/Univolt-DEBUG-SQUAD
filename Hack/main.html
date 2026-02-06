@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univolt | Smart Alumni Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cyber-card {
+            background-color: black;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+        }
+
+        /* FLOW EFFECT ANIMATION */
+        @keyframes flow {
+            0% { transform: translateX(-150%) skewX(-25deg); }
+            100% { transform: translateX(150%) skewX(-25deg); }
+        }
+
+        .glow-flow {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glow-flow::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: flow 2.5s infinite linear;
+        }
+
+        /* LOGO GLOW (NO BOX) */
+        .logo-glow {
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.6));
+            transition: transform 0.3s ease;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(245, 158, 11, 0.1);
+            border-top: 3px solid #f59e0b;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-black via-zinc-900 to-orange-950 min-h-screen flex items-center justify-center p-4 font-sans">
+
+    <div class="cyber-card w-full max-w-md p-8 rounded-2xl relative overflow-hidden">
+        
+        <div class="text-center mb-8 relative z-10">
+            <div class="flex justify-center mb-6">
+                <img src="image1.png" 
+                     alt="Univolt Logo" 
+                     class="w-28 h-28 object-contain logo-glow">
+            </div>
+            
+            <h1 id="form-title" class="text-3xl font-bold text-white uppercase tracking-tighter">Log into Univolt</h1>
+            <p id="form-subtitle" class="text-zinc-500 text-xs mt-1">Connect. Engage. Empower.</p>
+        </div>
+
+        <form id="auth-form" onsubmit="handleLogin(event)" class="relative z-10">
+            <div id="role-selector" class="hidden mb-6">
+                <label class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-3 block opacity-70">Identity Protocol</label>
+                <div class="grid grid-cols-1 gap-2">
+                    <button type="button" onclick="setRole('unibro')" id="btn-unibro" class="role-btn glow-flow flex justify-between items-center px-4 py-3 rounded-lg border border-orange-500 bg-orange-500 text-black font-bold transition-all">
+                        <span>UNIBRO</span> <span class="text-[10px] opacity-70 uppercase font-black">Student</span>
+                    </button>
+                    <button type="button" onclick="setRole('unimate')" id="btn-unimate" class="role-btn flex justify-between items-center px-4 py-3 rounded-lg border border-zinc-700 text-zinc-400 font-bold hover:border-orange-500/50 transition-all">
+                        <span>UNIMATE</span> <span class="text-[10px] opacity-70 uppercase font-black">Alumni</span>
+                    </button>
+                    <button type="button" onclick="setRole('unimentor')" id="btn-unimentor" class="role-btn flex justify-between items-center px-4 py-3 rounded-lg border border-zinc-700 text-zinc-400 font-bold hover:border-orange-500/50 transition-all">
+                        <span>UNIMENTOR</span> <span class="text-[10px] opacity-70 uppercase font-black">Admin</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <input type="text" placeholder="Username" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-all" required>
+                
+                <div id="extra-fields" class="space-y-4 hidden">
+                    <input id="role-specific-input" type="text" placeholder="Registration Number" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-all">
+                </div>
+
+                <input type="password" placeholder="Password" class="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-all" required>
+            </div>
+
+            <div id="forgot-pass" class="text-right mt-3">
+                <a href="#" class="text-xs text-zinc-500 hover:text-orange-500 transition-colors">Forgot Password?</a>
+            </div>
+
+            <div id="submit-container" class="mt-6">
+                <button type="submit" id="submit-btn" class="glow-flow w-full bg-orange-500 hover:bg-orange-400 text-black font-black py-4 rounded-lg flex justify-center items-center gap-3 transition-all active:scale-95 uppercase tracking-widest shadow-lg shadow-orange-500/20">
+                    <span id="btn-text">Sign In</span>
+                    <div id="loader" class="spinner"></div>
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-8 text-center">
+            <button onclick="toggleAuth()" id="toggle-text" class="text-xs text-zinc-500 tracking-widest uppercase">
+                New User? <span class="text-orange-500 font-black hover:underline cursor-pointer">Sign Up</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        
+    let isLogin = true;
+
+    // KEEP THIS: It handles the UI transitions
+    function toggleAuth() {
+        isLogin = !isLogin;
+        const elements = {
+            title: document.getElementById('form-title'),
+            roles: document.getElementById('role-selector'),
+            extra: document.getElementById('extra-fields'),
+            forgot: document.getElementById('forgot-pass'),
+            btn: document.getElementById('btn-text'),
+            toggle: document.getElementById('toggle-text'),
+            submitContainer: document.getElementById('submit-container')
+        };
+
+        if (!isLogin) {
+            elements.title.innerText = "Register for Univolt"; 
+            elements.roles.classList.remove('hidden');
+            elements.extra.classList.remove('hidden');
+            elements.forgot.classList.add('hidden');
+            elements.btn.innerText = "Create Identity";
+            elements.toggle.innerHTML = 'Existing Member? <span class="text-orange-500 font-black">Sign In</span>';
+            elements.submitContainer.classList.replace('mt-6', 'mt-12'); // The extra spacing you asked for
+        } else {
+            elements.title.innerText = "Log into Univolt"; 
+            elements.roles.classList.add('hidden');
+            elements.extra.classList.add('hidden');
+            elements.forgot.classList.remove('hidden');
+            elements.btn.innerText = "Sign In";
+            elements.toggle.innerHTML = 'New User? <span class="text-orange-500 font-black">Sign Up</span>';
+            elements.submitContainer.classList.replace('mt-12', 'mt-6');
+        }
+    }
+
+    // KEEP THIS: It handles the role selection UI
+    function setRole(role) {
+        const btns = document.querySelectorAll('.role-btn');
+        btns.forEach(btn => {
+            btn.className = "role-btn flex justify-between items-center px-4 py-3 rounded-lg border border-zinc-700 text-zinc-400 font-bold hover:border-orange-500/50 transition-all";
+        });
+        const activeBtn = document.getElementById(`btn-${role}`);
+        activeBtn.className = "role-btn glow-flow flex justify-between items-center px-4 py-3 rounded-lg border border-orange-500 bg-orange-500 text-black font-bold transition-all";
+    }
+
+    // REPLACE THIS: This is the "File 3" logic that talks to the database
+    async function handleLogin(e) {
+        e.preventDefault();
+        
+        // Gather the inputs
+        const username = e.target.querySelector('input[type="text"]').value;
+        const password = e.target.querySelector('input[type="password"]').value;
+        const regNumber = document.getElementById('role-specific-input')?.value;
+        const role = document.querySelector('.role-btn.bg-orange-500')?.id.replace('btn-', '') || 'unibro';
+
+        // Show the loading spinner
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('btn-text').style.opacity = '0';
+
+        const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
+        
+        try {
+            const response = await fetch(`http://localhost:5000${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, registrationNumber: regNumber, role })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                if (isLogin) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = data.redirectUrl; // Goes to admin-stats.html or dashboard.html
+                } else {
+                    alert(data.msg);
+                    toggleAuth(); // Switches back to Sign In view
+                }
+            } else {
+                alert("ACCESS DENIED: " + data.msg);
+            }
+        } catch (err) {
+            alert("SERVER OFFLINE: Please run 'node server.js' in your terminal.");
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('btn-text').style.opacity = '1';
+        }
+    }
+</script>
+    
+</body>
+</html>
