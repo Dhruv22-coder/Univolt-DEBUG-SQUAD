@@ -1,0 +1,25 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "hackathon",
+  "homepage": "https://github.com/Dhruv22-coder/Univault-DEBUG-SQUAD#readme",
+  "bugs": {
+    "url": "https://github.com/Dhruv22-coder/Univault-DEBUG-SQUAD/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dhruv22-coder/Univault-DEBUG-SQUAD.git"
+  },
+  "license": "ISC",
+  "author": "Mahir",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1"
+  }
+}
