@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univolt | Admin Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background:#000; color:white; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        .cyber-card { background: rgba(10,10,10,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(245,158,11,0.1); border-radius: 1rem; }
+        .sidebar-item { transition: 0.3s; cursor: pointer; border-radius: 12px; }
+        .sidebar-item:hover { background: rgba(245,158,11,0.1); color: #fbbf24; }
+        .sidebar-item.active { background: #f59e0b; color: black; font-weight: 900; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex bg-black">
+
+<aside class="w-72 cyber-card m-4 p-6 flex flex-col border-r border-zinc-800">
+    <div class="flex-1">
+        <div class="flex items-center gap-3 mb-10">
+            <div class="w-8 h-8 bg-orange-500 rounded shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
+            <h1 class="text-xl font-black text-white italic uppercase tracking-tighter">Univolt <span class="text-orange-500">HQ</span></h1>
+        </div>
+        <nav class="space-y-2">
+            <div onclick="switchTab('users')" id="tab-users" class="sidebar-item active p-4 flex items-center gap-3 text-sm uppercase font-black tracking-widest">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> Users Control
+            </div>
+            <div onclick="switchTab('jobs')" id="tab-jobs" class="sidebar-item p-4 flex items-center gap-3 text-sm uppercase font-black tracking-widest text-zinc-500">
+                <i data-lucide="briefcase" class="w-4 h-4"></i> Global Jobs
+            </div>
+            <div onclick="window.location.href='donations.html'" class="sidebar-item p-4 flex items-center gap-3 text-sm uppercase font-black tracking-widest text-orange-500">
+                <i data-lucide="heart" class="w-4 h-4"></i> Donations
+            </div>
+            <div class="p-4 flex items-center gap-3 text-sm uppercase font-black tracking-widest text-zinc-700 italic">
+                <i data-lucide="lock" class="w-4 h-4"></i> Analytics (Soon)
+            </div>
+        </nav>
+    </div>
+    <div class="pt-6 border-t border-zinc-900">
+        <p id="node-count" class="text-xs font-mono text-orange-500 mb-4">Nodes: --</p>
+        <button onclick="handleLogout()" class="w-full p-4 bg-zinc-950 border border-zinc-800 rounded-xl text-red-500 font-black text-[10px] uppercase hover:bg-red-500 hover:text-white transition-all">Terminate Session</button>
+    </div>
+</aside>
+
+<main class="flex-1 p-8 overflow-y-auto">
+    <section id="section-users" class="space-y-8">
+        <h2 class="text-2xl font-black uppercase italic tracking-tighter mb-6">Verification <span class="text-orange-500">Queue</span></h2>
+        <div id="pendingQueue" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        <h2 class="text-xl font-black uppercase italic tracking-tighter mb-4 text-zinc-500">Authorized Nodes</h2>
+        <div class="cyber-card overflow-hidden"><table class="w-full text-left"><thead class="bg-zinc-950 text-[10px] font-black text-zinc-500 border-b border-zinc-800"><tr><th class="p-4">Entity</th><th class="p-4">Role</th><th class="p-4">Status</th><th class="p-4">Actions</th></tr></thead><tbody id="approvedTable" class="text-sm"></tbody></table></div>
+    </section>
+    <section id="section-jobs" class="hidden space-y-8">
+        <h2 class="text-2xl font-black uppercase italic tracking-tighter mb-6 text-orange-500">Global Broadcasts</h2>
+        <div id="globalJobsList" class="space-y-4"></div>
+    </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script>
+    // Copy-paste your existing Firebase config here
+    const firebaseConfig = { apiKey: "AIzaSyBiUgLhheSZfbUb3_iR9BXXE0egguhaeII", authDomain: "univolt-55ccc.firebaseapp.com", databaseURL: "https://univolt-55ccc-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "univolt-55ccc", appId: "1:222559597781:web:86482a1f73314092371e5c" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    lucide.createIcons();
+    auth.onAuthStateChanged(u => { if(!u) window.location.href="index.html" });
+    window.switchTab = (tab) => {
+        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active', 'text-white'));
+        document.getElementById('tab-'+tab).classList.add('active');
+        document.getElementById('section-users').classList.toggle('hidden', tab !== 'users');
+        document.getElementById('section-jobs').classList.toggle('hidden', tab !== 'jobs');
+    };
+    db.ref("users").on("value", (snap) => {
+        const data = snap.val(); const pending = document.getElementById("pendingQueue"); const approved = document.getElementById("approvedTable"); const count = document.getElementById("node-count");
+        pending.innerHTML = ""; approved.innerHTML = ""; if(!data) return;
+        count.innerText = `Nodes: ${Object.keys(data).length}`;
+        Object.keys(data).forEach(uid => {
+            const u = data[uid];
+            if(u.status === "pending") {
+                pending.innerHTML += `<div class="p-5 bg-zinc-950 border border-zinc-800 rounded-2xl flex justify-between items-center border-l-4 border-l-orange-500"><div><p class="font-black text-white text-xs">${u.name}</p><p class="text-[9px] text-orange-500 mt-1 uppercase">${u.role}</p></div><div class="flex gap-2"><button onclick="approve('${uid}')" class="bg-orange-500 text-black px-4 py-2 rounded-lg font-black text-[10px] uppercase">Approve</button><button onclick="delUser('${uid}')" class="text-zinc-600 hover:text-red-500 px-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+            } else {
+                approved.innerHTML += `<tr class="border-b border-zinc-900"><td class="p-4"><p class="font-bold text-zinc-200">${u.name}</p></td><td class="p-4 text-[10px] font-black uppercase text-zinc-400">${u.role}</td><td class="p-4"><span class="w-2 h-2 bg-green-500 rounded-full inline-block"></span></td><td class="p-4"><button onclick="delUser('${uid}')" class="text-zinc-700 hover:text-red-500 uppercase text-[10px] font-black">Revoke</button></td></tr>`;
+            }
+        });
+        lucide.createIcons();
+    });
+    db.ref("network_posts").on("value", snap => {
+        const list = document.getElementById("globalJobsList"); list.innerHTML = "";
+        if(!snap.val()) return;
+        snap.forEach(child => {
+            const j = child.val();
+            list.innerHTML += `<div class="p-4 bg-black border border-zinc-900 rounded-xl flex justify-between items-center group"><div><h4 class="text-sm font-black text-white uppercase italic">${j.title}</h4><p class="text-[10px] text-zinc-500">By: ${j.posterName}</p></div><button onclick="delJob('${child.key}')" class="bg-red-500/10 text-red-500 p-2 rounded-lg opacity-0 group-hover:opacity-100"><i data-lucide="trash" class="w-4 h-4"></i></button></div>`;
+        });
+        lucide.createIcons();
+    });
+    window.approve = (id) => db.ref("users/"+id).update({ status: "approved" });
+    window.delUser = (id) => confirm("Delete user?") && db.ref("users/"+id).remove();
+    window.delJob = (id) => confirm("Remove post?") && db.ref("network_posts/"+id).remove();
+    window.handleLogout = () => confirm("Exit?") && auth.signOut().then(()=>window.location.href="index.html");
+</script>
+</body>
+</html>

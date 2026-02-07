@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univolt | Smart Alumni Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background-color: #000; overflow-x: hidden; color: white; font-family: 'Inter', sans-serif; }
+        .cyber-card { 
+            background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); 
+            border: 1px solid rgba(245, 158, 11, 0.15); visibility: hidden;
+        }
+        #intro-overlay { position: fixed; inset: 0; z-index: 100; background: black; display: flex; align-items: center; justify-content: center; }
+        .logo-intro { width: 150px; filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.8)); transform: scale(0); }
+        .spinner { border: 3px solid rgba(245, 158, 11, 0.1); border-top: 3px solid #f59e0b; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .input-box { background: rgba(0,0,0,0.5); border: 1px solid #27272a; padding: 14px; border-radius: 12px; width: 100%; outline: none; color: #fff; font-size: 14px; transition: 0.3s; }
+        .input-box:focus { border-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.15); }
+        .label-text { text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 0.2em; color: #71717a; margin-bottom: 6px; display: block; }
+        option { background: #18181b; color: white; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-black via-zinc-900 to-orange-950 min-h-screen flex items-center justify-center p-4">
+
+    <div id="intro-overlay">
+        <img src="image1.png" id="intro-logo" class="logo-intro" alt="Logo">
+    </div>
+
+    <div id="main-content" class="cyber-card w-full max-w-lg p-8 md:p-10 rounded-3xl relative">
+        <div class="text-center mb-8">
+            <img src="image1.png" alt="Logo" class="w-20 h-20 mx-auto mb-4 object-contain">
+            <h1 id="form-title" class="text-3xl font-black uppercase">Log into Univolt</h1>
+            <p id="form-subtitle" class="text-zinc-500 text-[10px] font-bold tracking-[0.3em] uppercase">Secure Network Access</p>
+        </div>
+
+        <form id="auth-form" class="space-y-5">
+            <div id="name-container" class="hidden">
+                <span class="label-text">Full Name</span>
+                <input type="text" id="name" placeholder="E.G. JOHN DOE" class="input-box">
+            </div>
+
+            <div>
+                <span class="label-text">Email Protocol</span>
+                <input type="email" id="email" placeholder="USER@UNIVOLT.COM" class="input-box" required>
+            </div>
+
+            <div id="role-selector" class="hidden">
+                <span class="label-text">Identity Protocol</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="setRole('unibro')" id="btn-unibro" class="role-btn p-3 rounded-xl border border-orange-500 bg-orange-500 text-black font-bold text-[14px]">
+                        UNIBRO <br> <span class="text-[13px] opacity-70">(STUDENT)</span>
+                    </button>
+                    <button type="button" onclick="setRole('unimate')" id="btn-unimate" class="role-btn p-3 rounded-xl border border-zinc-700 text-zinc-400 font-bold text-[14px]">
+                        UNIMATE <br> <span class="text-[13px] opacity-70">(MENTOR)</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="signup-details" class="hidden space-y-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="label-text">Birth Date</span>
+                        <input type="date" id="dob" class="input-box">
+                    </div>
+                    <div>
+                        <span class="label-text">Blood Group</span>
+                        <select id="blood-group" class="input-box">
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                </div>
+                <span class="label-text">Bio</span>
+                <textarea id="address" placeholder="Tell us about yourself..." class="input-box h-24 resize-none"></textarea>
+            </div>
+
+            <div>
+                <span class="label-text">Security Key</span>
+                <input type="password" id="password" placeholder="••••••••" class="input-box" required>
+            </div>
+
+            <button type="submit" class="w-full bg-orange-500 text-black font-black py-4 rounded-xl flex justify-center items-center gap-3 uppercase text-xs tracking-widest transition-all hover:bg-orange-400">
+                <span id="btn-text">Sign In</span>
+                <div id="loader" class="spinner"></div>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <button onclick="toggleAuth()" id="toggle-text" class="text-[10px] text-zinc-500 tracking-widest uppercase">
+                New User? <span class="text-orange-500 font-black">Sign Up</span>
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        // (Baki Firebase Imports same rahengi)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBiUgLhheSZfbUb3_iR9BXXE0egguhaeII",
+            authDomain: "univolt-55ccc.firebaseapp.com",
+            databaseURL: "https://univolt-55ccc-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "univolt-55ccc",
+            appId: "1:222559597781:web:86482a1f73314092371e5c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let isLogin = true;
+        let selectedRole = 'unibro';
+        
+        const ADMIN_EMAILS = ["admin1@univolt.com", "admin2@univolt.com", "owner@univolt.com"];
+        const PRESET_USERS = {
+            "admin1@univolt.com": { pass: "admin123", role: "admin" },
+            "admin2@univolt.com": { pass: "admin456", role: "admin" },
+            "owner@univolt.com": { pass: "owner789", role: "admin" },
+            "student@univolt.com": { pass: "student123", role: "unibro" },
+            "alumni@univolt.com": { pass: "alumni123", role: "unimate" }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const tl = gsap.timeline();
+            tl.to("#intro-logo", { scale: 1.2, duration: 1.2 })
+              .to("#intro-logo", { scale: 4, opacity: 0, duration: 0.6 })
+              .to("#intro-overlay", { display: "none", duration: 0.5 })
+              .to("#main-content", { visibility: "visible", opacity: 1, duration: 1 });
+        });
+
+        window.toggleAuth = () => {
+            isLogin = !isLogin;
+            document.getElementById('form-title').innerText = isLogin ? "Log into Univolt" : "New Node Registration";
+            document.getElementById('name-container').classList.toggle('hidden', isLogin);
+            document.getElementById('role-selector').classList.toggle('hidden', isLogin);
+            document.getElementById('signup-details').classList.toggle('hidden', isLogin);
+            document.getElementById('btn-text').innerText = isLogin ? "Sign In" : "Authorize & Register";
+            document.getElementById('toggle-text').innerHTML = isLogin ? 'New User? <span class="text-orange-500 font-black">Sign Up</span>' : 'Already registered? <span class="text-orange-500 font-black">Sign In</span>';
+        };
+
+        window.setRole = (role) => {
+            selectedRole = role;
+            document.querySelectorAll('.role-btn').forEach(b => {
+                b.classList.remove('bg-orange-500', 'text-black', 'border-orange-500');
+                b.classList.add('bg-transparent', 'text-zinc-400', 'border-zinc-700');
+            });
+            const activeBtn = document.getElementById(`btn-${role}`);
+            activeBtn.classList.remove('text-zinc-400', 'border-zinc-700');
+            activeBtn.classList.add('bg-orange-500', 'text-black', 'border-orange-500');
+        };
+
+        document.getElementById('auth-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.toLowerCase().trim();
+            const pass = document.getElementById('password').value;
+            document.getElementById('loader').style.display = 'block';
+
+            if (isLogin && PRESET_USERS[email]) {
+                if (PRESET_USERS[email].pass === pass) {
+                    const role = PRESET_USERS[email].role;
+                    window.location.href = role === 'admin' ? "admin.html" : (role === 'unibro' ? "student.html" : "alumni.html");
+                    return;
+                } else {
+                    alert("Security Key Mismatch!");
+                    document.getElementById('loader').style.display = 'none';
+                    return;
+                }
+            }
+
+            try {
+                if (!isLogin) {
+                    const res = await createUserWithEmailAndPassword(auth, email, pass);
+                    const isAdmin = ADMIN_EMAILS.includes(email);
+                    await set(ref(db, 'users/' + res.user.uid), {
+                        name: document.getElementById('name').value,
+                        email: email,
+                        dob: document.getElementById('dob').value,
+                        blood: document.getElementById('blood-group').value,
+                        address: document.getElementById('address').value,
+                        role: isAdmin ? "admin" : selectedRole,
+                        status: isAdmin ? "approved" : "pending"
+                    });
+                    alert(isAdmin ? "Admin Node Registered!" : "Registration Complete. Pending Admin Approval.");
+                    location.reload();
+                } else {
+                    const res = await signInWithEmailAndPassword(auth, email, pass);
+                    if (ADMIN_EMAILS.includes(email)) {
+                        window.location.href = "admin.html";
+                    } else {
+                        const snap = await get(child(ref(db), `users/${res.user.uid}`));
+                        if (snap.exists() && snap.val().status === "approved") {
+                            window.location.href = snap.val().role === 'unibro' ? "student.html" : "alumni.html";
+                        } else {
+                            alert("Access Denied: Node Pending Approval.");
+                        }
+                    }
+                }
+            } catch (err) { alert("Protocol Error: " + err.message); }
+            document.getElementById('loader').style.display = 'none';
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univolt | Student Neural Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background-color: #000; color: white; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        .cyber-panel { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.1); }
+        .sidebar-item { transition: 0.3s; border-radius: 12px; cursor: pointer; border: 1px solid transparent; }
+        .sidebar-item:hover { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #f59e0b; }
+        .sidebar-item.active { background: #f59e0b; color: black; font-weight: 900; }
+        .modal-overlay { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-card { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 30px; }
+        .blur-content { filter: blur(12px); pointer-events: none; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex flex-col relative">
+
+    <div id="profileModal" class="modal-overlay fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-xl hidden opacity-0">
+        <div class="glass-card w-full max-w-sm overflow-hidden relative mx-4 border-orange-500/30">
+            <button onclick="closeProfile()" class="absolute top-5 right-5 text-zinc-500 hover:text-white z-10"><i data-lucide="x-circle"></i></button>
+            <div class="h-32 bg-gradient-to-t from-zinc-900 to-orange-500/10 flex items-center justify-center pt-8">
+                <div class="w-20 h-20 bg-black rounded-2xl border-2 border-orange-500 flex items-center justify-center shadow-2xl">
+                    <span id="prof-initial" class="text-3xl font-black text-orange-500 uppercase">?</span>
+                </div>
+            </div>
+            <div class="p-8 text-center">
+                <h2 id="prof-name" class="text-xl font-black uppercase tracking-tighter mb-1 italic">Name</h2>
+                <p id="prof-badge" class="inline-block text-[8px] font-black px-2 py-0.5 rounded border border-orange-500 text-orange-500 mb-6 uppercase tracking-widest">User</p>
+                <div class="space-y-4 text-left">
+                    <div><label class="text-[8px] font-black text-zinc-600 uppercase tracking-widest">Identity</label><p id="prof-loc" class="text-xs font-bold text-zinc-300">Verified Node</p></div>
+                    <div><label class="text-[8px] font-black text-zinc-600 uppercase tracking-widest">Bio</label><p id="prof-bio" class="text-[11px] text-zinc-400 italic">Connected to Univolt Network.</p></div>
+                </div>
+                <div id="modal-actions" class="mt-8 flex gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <header class="h-20 cyber-panel flex items-center justify-between px-8 border-b border-zinc-800">
+        <div class="flex items-center gap-4"><div class="w-10 h-10 bg-orange-500 rounded flex items-center justify-center font-black text-black">U</div><span class="font-black text-xl italic text-orange-500 uppercase">Univolt Student</span></div>
+        <div onclick="viewMyProfile()" class="w-10 h-10 rounded-full bg-orange-500 border-2 border-orange-500 cursor-pointer overflow-hidden shadow-[0_0_15px_rgba(245,158,11,0.3)]"><img id="profilePic" src="" class="w-full h-full object-cover"></div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-[30%] cyber-panel p-6 flex flex-col gap-3 border-r border-zinc-800">
+            <div onclick="switchTab('feed')" id="tab-feed" class="sidebar-item active p-4 flex items-center gap-4"><i data-lucide="rss" class="w-5 h-5"></i><span class="text-sm font-black uppercase tracking-widest">Broadcasts</span></div>
+            <div onclick="switchTab('network')" id="tab-network" class="sidebar-item p-4 flex items-center gap-4"><i data-lucide="globe" class="w-5 h-5"></i><span class="text-sm font-black uppercase tracking-widest">Directory</span></div>
+            
+            <div onclick="window.location.href='chat.html'" class="sidebar-item mt-auto p-4 flex items-center gap-4 text-orange-500 border-orange-500/20 border">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+                <span class="text-sm font-black uppercase tracking-widest">Network Chat</span>
+            </div>
+        </aside>
+
+        <main class="w-[70%] p-8 overflow-y-auto">
+            <div id="section-feed" class="space-y-6">
+                <h2 class="text-3xl font-black uppercase italic tracking-tighter text-orange-500">Opportunities</h2>
+                <div id="broadcastFeed" class="grid gap-6"></div>
+            </div>
+            
+            <div id="section-network" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-black uppercase italic tracking-tighter text-orange-500">Directory</h2>
+                    <div class="relative w-48">
+                        <input type="text" id="locSearch" oninput="filterByLoc()" placeholder="SEARCH LOCATION..." class="w-full bg-zinc-900 border border-zinc-800 p-2 rounded-lg text-[8px] font-black uppercase pl-8 focus:border-orange-500 outline-none">
+                        <i data-lucide="map-pin" class="w-3 h-3 absolute left-2.5 top-2.5 text-zinc-500"></i>
+                    </div>
+                </div>
+                <div id="usersGrid" class="grid grid-cols-2 gap-4"></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+        import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyBiUgLhheSZfbUb3_iR9BXXE0egguhaeII", authDomain: "univolt-55ccc.firebaseapp.com", databaseURL: "https://univolt-55ccc-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "univolt-55ccc", appId: "1:222559597781:web:86482a1f73314092371e5c" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        lucide.createIcons();
+
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                onValue(ref(db, "users/" + user.uid), (snap) => {
+                    currentUser = snap.val(); currentUser.uid = user.uid;
+                    document.getElementById('profilePic').src = `https://ui-avatars.com/api/?name=${currentUser.name}&background=f59e0b&color=000`;
+                });
+                loadContent();
+                loadUsers();
+            } else { window.location.href = "index.html"; }
+        });
+
+        window.filterByLoc = () => {
+            const term = document.getElementById('locSearch').value.toLowerCase();
+            const cards = document.querySelectorAll('#usersGrid > div');
+            cards.forEach(card => {
+                const loc = card.getAttribute('data-loc').toLowerCase();
+                card.style.display = loc.includes(term) ? 'flex' : 'none';
+            });
+        };
+
+        function loadUsers() {
+            onValue(ref(db, "users"), (snap) => {
+                const grid = document.getElementById('usersGrid'); grid.innerHTML = "";
+                snap.forEach(child => {
+                    const u = child.val();
+                    if(child.key === auth.currentUser.uid) return;
+                    const card = document.createElement('div');
+                    card.setAttribute('data-loc', u.address || 'global');
+                    card.className = "cyber-panel p-4 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-orange-500/50 transition-all";
+                    card.onclick = () => showUserProfile(u);
+                    card.innerHTML = `<div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center font-black text-orange-500">${u.name[0]}</div>
+                        <div><p class="text-[10px] font-black uppercase">${u.name}</p><p class="text-[7px] text-zinc-500 font-bold uppercase">${u.address || 'Global'} | ${u.role === 'unimate' ? 'Alumni' : 'Student'}</p></div>`;
+                    grid.appendChild(card);
+                });
+            });
+        }
+
+        window.showUserProfile = (u) => {
+            document.getElementById('prof-initial').innerText = u.name[0];
+            document.getElementById('prof-name').innerText = u.name;
+            document.getElementById('prof-badge').innerText = u.role === 'unimate' ? 'Verified Alumni' : 'Verified Student';
+            document.getElementById('modal-actions').innerHTML = `<button onclick="closeProfile()" class="w-full bg-orange-500 text-black py-4 rounded-xl text-[10px] font-black uppercase">Close View</button>`;
+            openModal();
+        };
+
+        window.viewMyProfile = () => {
+            document.getElementById('prof-initial').innerText = currentUser.name[0];
+            document.getElementById('prof-name').innerText = currentUser.name;
+            document.getElementById('prof-badge').innerText = 'Verified Student';
+            document.getElementById('modal-actions').innerHTML = `<button onclick="signOut(auth).then(()=>window.location.href='index.html')" class="flex-1 bg-zinc-900 text-red-500 border border-zinc-800 py-4 rounded-xl text-[10px] font-black uppercase">Logout</button>
+                <button onclick="closeProfile()" class="flex-1 bg-orange-500 text-black py-4 rounded-xl text-[10px] font-black uppercase">Close</button>`;
+            openModal();
+        };
+
+        const openModal = () => { const m = document.getElementById('profileModal'); m.classList.remove('hidden'); setTimeout(()=>m.classList.add('opacity-100'), 10); };
+        window.closeProfile = () => { const m = document.getElementById('profileModal'); m.classList.remove('opacity-100'); setTimeout(()=>m.classList.add('hidden'), 300); };
+
+        function loadContent() {
+            onValue(ref(db, 'network_posts'), (postSnap) => {
+                onValue(ref(db, 'applications'), (appSnap) => {
+                    const feed = document.getElementById('broadcastFeed'); feed.innerHTML = "";
+                    const apps = []; appSnap.forEach(a => { if(a.val().studentId === auth.currentUser.uid) apps.push(a.val()); });
+                    postSnap.forEach(child => {
+                        const post = child.val();
+                        const myApp = apps.find(a => a.jobId === child.key);
+                        const status = myApp ? myApp.status : "unapplied";
+                        const isApp = status === "approved";
+                        feed.innerHTML += `<div class="cyber-panel p-6 rounded-2xl border border-orange-500/10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div><h3 class="text-xl font-black uppercase italic">${post.title}</h3><p class="text-[9px] text-zinc-500 font-bold uppercase">BY ${post.posterName}</p></div>
+                                ${status === 'unapplied' ? `<button onclick="applyNow('${child.key}', '${post.title}', '${post.posterId}')" class="bg-orange-500 text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase">Apply</button>` : `<span class="text-[9px] text-orange-500 uppercase border border-orange-500/20 px-4 py-2 rounded-xl">${status}</span>`}
+                            </div>
+                            <div class="bg-black/40 p-4 rounded-xl relative overflow-hidden"><p class="text-xs text-zinc-400 ${!isApp ? 'blur-content' : ''}">${post.description}</p>
+                            ${!isApp ? `<div class="absolute inset-0 flex items-center justify-center bg-black/60"><p class="text-[8px] font-black text-orange-500">LOCKED</p></div>` : ''}</div></div>`;
+                    });
+                });
+            });
+        }
+
+        window.applyNow = (j, t, a) => push(ref(db, 'applications'), { jobId: j, jobTitle: t, alumniId: a, studentId: currentUser.uid, studentName: currentUser.name, status: "pending" });
+        window.switchTab = (t) => {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(`tab-${t}`).classList.add('active');
+            ['feed', 'network'].forEach(s => document.getElementById(`section-${s}`).classList.toggle('hidden', s !== t));
+        };
+    </script>
+</body>
+</html>

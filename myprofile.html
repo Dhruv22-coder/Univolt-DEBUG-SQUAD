@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univolt | My Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #050505; color: white; }
+        .glass-card { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 30px; }
+        .input-field { background: #000; border: 1px solid #222; border-radius: 12px; padding: 12px; width: 100%; outline: none; transition: 0.3s; }
+        .input-field:focus { border-color: #f59e0b; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <button onclick="window.location.href='index.html'" class="flex items-center gap-2 text-zinc-500 hover:text-white transition-all">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                <span class="text-[10px] font-black uppercase tracking-widest">Back to Network</span>
+            </button>
+            <h1 class="text-xl font-black italic text-orange-500 uppercase italic">Edit Profile</h1>
+        </div>
+
+        <div class="glass-card overflow-hidden">
+            <div class="h-32 univolt-gradient bg-zinc-900 border-b border-zinc-800 flex items-center justify-center">
+                <p class="text-[8px] font-black uppercase tracking-[0.5em] text-zinc-700">Univolt Network Banner</p>
+            </div>
+
+            <div class="p-8 md:p-12 -mt-16">
+                <div class="flex flex-col md:flex-row gap-8 items-end mb-10">
+                    <div class="w-32 h-32 bg-zinc-900 rounded-[35px] border-4 border-black flex items-center justify-center relative shadow-2xl">
+                        <span id="p-initial" class="text-4xl font-black text-zinc-800">U</span>
+                        <button class="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full text-black hover:scale-110 transition-transform">
+                            <i data-lucide="camera" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1">
+                        <h2 id="display-name" class="text-3xl font-black italic uppercase tracking-tighter">Loading...</h2>
+                        <p id="display-role" class="text-orange-500 text-[10px] font-black uppercase tracking-[0.3em]">Verified Member</p>
+                    </div>
+                </div>
+
+                <form id="profile-form" class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Full Name</label>
+                            <input type="text" id="form-name" class="input-field text-white" placeholder="Enter your name">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Role</label>
+                            <select id="form-role" class="input-field text-white appearance-none">
+                                <option value="student">UNIBRO (STUDENT)</option>
+                                <option value="alumni">UNIMATE (ALUMNI)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Professional Bio</label>
+                        <textarea id="form-bio" rows="4" class="input-field text-white resize-none" placeholder="Tell the network about yourself..."></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-400 text-black font-black py-4 rounded-2xl text-[10px] uppercase tracking-[0.4em] transition-all shadow-lg">
+                        Update Database Node
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBiUgLhheSZfbUb3_iR9BXXE0egguhaeII",
+        authDomain: "univolt-55ccc.firebaseapp.com",
+        databaseURL: "https://univolt-55ccc-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "univolt-55ccc",
+        appId: "1:222559597781:web:86482a1f73314092371e5c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    lucide.createIcons();
+
+    let uid = null;
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            uid = user.uid;
+            onValue(ref(db, `users/${uid}`), (snap) => {
+                const data = snap.val();
+                if (data) {
+                    document.getElementById('display-name').innerText = data.name || "New Node";
+                    document.getElementById('p-initial').innerText = (data.name || "U").charAt(0).toUpperCase();
+                    document.getElementById('form-name').value = data.name || "";
+                    document.getElementById('form-role').value = data.role || "student";
+                    document.getElementById('form-bio').value = data.bio || "";
+                    document.getElementById('display-role').innerText = data.role === 'student' ? 'Verified Unibro' : 'Verified Unimate';
+                }
+            });
+        }
+    });
+
+    document.getElementById('profile-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const updatedData = {
+            name: document.getElementById('form-name').value,
+            role: document.getElementById('form-role').value,
+            bio: document.getElementById('form-bio').value
+        };
+
+        if (uid) {
+            try {
+                await update(ref(db, `users/${uid}`), updatedData);
+                alert("Profile Synced Successfully!");
+            } catch (err) {
+                alert("Database Error.");
+            }
+        }
+    };
+</script>
+</body>
+</html>
